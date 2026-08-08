@@ -92,8 +92,11 @@ The library still targets `net472` and still ships as
   in transitively at the same versions the old `packages.config` pinned. Do not re-add them by hand.
 - `Microsoft.NETFramework.ReferenceAssemblies` is `PrivateAssets="all"`, so it is build-time only and
   never appears in the published package's dependency list.
-- The website's C# setup page installs "latest" and does **not** pin a version, so a release needs no
-  website change.
+- **Update the website after a release.** The C# setup page installs "latest", so nothing breaks if
+  you forget — but the page states the current version, and a stale number there misleads people into
+  thinking they are up to date. Page:
+  `stocksdev-website/src/content/docs/client-setup/c-library.md`. Bump `lastUpdated` in the same edit.
+  A brand-new API call should also get a "needs version X.Y.Z" note on its API reference page.
 - **Publishing by hand with a long-lived API key is discouraged** and should not be needed. If you
   ever must, generate a key scoped to this package alone, pass it via an environment variable so it
   stays out of shell history, and revoke it straight afterwards.

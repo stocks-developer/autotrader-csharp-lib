@@ -101,6 +101,7 @@ Full step-by-step guide: **[C# library setup](https://stocksdeveloper.in/documen
 | 📦 NuGet package | https://www.nuget.org/packages/StocksDeveloper.AutoTraderWeb.Api/ |
 | 🆓 Start free (1-month trial) | https://webx.stocksdeveloper.in/register |
 | ✉️ Contact us | https://stocksdeveloper.in/contact/ |
+| 🛠️ Maintainers: releasing | [RELEASING.md](RELEASING.md) |
 
 ## About Stocks Developer
 

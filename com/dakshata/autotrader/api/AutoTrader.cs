@@ -171,6 +171,52 @@ namespace com.dakshata.autotrader.api
             return Execute<string>(POST, TRADING_URI + "/placeCoverOrder", data);
         }
 
+        public IOperationResponse<string> PlaceAutoTraderBracketOrder(string pseudoAccount,
+            string exchange, string symbol, TradeType tradeType, OrderType orderType,
+            int quantity, float price, float triggerPrice,
+            float target, float stoploss, float trailingStoploss)
+        {
+            IDictionary<string, object> data = new Dictionary<string, object>
+            {
+                ["pseudoAccount"] = pseudoAccount,
+                ["exchange"] = exchange,
+                ["symbol"] = symbol,
+                ["tradeType"] = tradeType,
+                ["orderType"] = orderType,
+                ["quantity"] = quantity,
+                ["price"] = price,
+                ["triggerPrice"] = triggerPrice,
+                ["target"] = target,
+                ["stoploss"] = stoploss,
+                ["trailingStoploss"] = trailingStoploss
+            };
+
+            return Execute<string>(POST, TRADING_URI + "/placeAutoTraderBracketOrder", data);
+        }
+
+        public IOperationResponse<string> PlaceAutoTraderCoverOrder(string pseudoAccount,
+            string exchange, string symbol, TradeType tradeType, OrderType orderType,
+            int quantity, float price, float stoploss, float trailingStoploss)
+        {
+            // No triggerPrice: an AutoTrader cover order carries its stop as a distance in
+            // rupees in stoploss, unlike a broker cover order which uses triggerPrice as the
+            // stop price.
+            IDictionary<string, object> data = new Dictionary<string, object>
+            {
+                ["pseudoAccount"] = pseudoAccount,
+                ["exchange"] = exchange,
+                ["symbol"] = symbol,
+                ["tradeType"] = tradeType,
+                ["orderType"] = orderType,
+                ["quantity"] = quantity,
+                ["price"] = price,
+                ["stoploss"] = stoploss,
+                ["trailingStoploss"] = trailingStoploss
+            };
+
+            return Execute<string>(POST, TRADING_URI + "/placeAutoTraderCoverOrder", data);
+        }
+
         public IOperationResponse<string> PlaceRegularOrder(string pseudoAccount,
             string exchange, string symbol, TradeType tradeType, OrderType orderType,
             ProductType productType, int quantity, float price, float triggerPrice)

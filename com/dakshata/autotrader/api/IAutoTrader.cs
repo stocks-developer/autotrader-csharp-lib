@@ -76,8 +76,62 @@ namespace com.dakshata.autotrader.api
         /// <param name="price">         price </param>
         /// <param name="triggerPrice">  trigger price </param>
         /// <returns> the order id given by your stock broker </returns>
-        IOperationResponse<String> PlaceCoverOrder(string pseudoAccount, string exchange, string symbol, 
+        IOperationResponse<String> PlaceCoverOrder(string pseudoAccount, string exchange, string symbol,
             TradeType tradeType, OrderType orderType, int quantity, float price, float triggerPrice);
+
+        /// <summary>
+        /// Places an AutoTrader bracket order — our own bracket order, which works with every
+        /// broker we support, including brokers that do not offer bracket orders of their own.
+        /// For more information, please see <a href=
+        /// "https://stocksdeveloper.in/documentation/api/place-autotrader-bracket-order/">api
+        /// docs</a>.
+        /// <para>
+        /// The entry goes to your broker as an ordinary intraday order and we watch the levels
+        /// for you. target, stoploss and trailingStoploss are distances in rupees away from your
+        /// entry price, the same as they are for PlaceBracketOrder. The trailingStoploss is the
+        /// step the stop moves in, so it needs a stoploss alongside it.
+        /// </para>
+        /// </summary>
+        /// <param name="pseudoAccount">    pseudo account </param>
+        /// <param name="exchange">         exchange </param>
+        /// <param name="symbol">           symbol </param>
+        /// <param name="tradeType">        trade type </param>
+        /// <param name="orderType">        order type </param>
+        /// <param name="quantity">         quantity </param>
+        /// <param name="price">            price </param>
+        /// <param name="triggerPrice">     trigger price (entry trigger; pass zero otherwise) </param>
+        /// <param name="target">           target, in rupees away from your entry price </param>
+        /// <param name="stoploss">         stoploss, in rupees away from your entry price </param>
+        /// <param name="trailingStoploss"> trailing stoploss step, in rupees </param>
+        /// <returns> the order id given by your stock broker </returns>
+        IOperationResponse<String> PlaceAutoTraderBracketOrder(string pseudoAccount, string exchange, string symbol,
+            TradeType tradeType, OrderType orderType, int quantity, float price, float triggerPrice,
+            float target, float stoploss, float trailingStoploss);
+
+        /// <summary>
+        /// Places an AutoTrader cover order — a stoploss without a target, which works with every
+        /// broker we support. For more information, please see <a href=
+        /// "https://stocksdeveloper.in/documentation/api/place-autotrader-cover-order/">api
+        /// docs</a>.
+        /// <para>
+        /// Note the difference from PlaceCoverOrder: a broker cover order carries its stop as an
+        /// absolute price in triggerPrice, whereas an AutoTrader cover order carries it as a
+        /// distance in rupees away from your entry price in stoploss. There is no trigger price.
+        /// </para>
+        /// </summary>
+        /// <param name="pseudoAccount">    pseudo account </param>
+        /// <param name="exchange">         exchange </param>
+        /// <param name="symbol">           symbol </param>
+        /// <param name="tradeType">        trade type </param>
+        /// <param name="orderType">        order type </param>
+        /// <param name="quantity">         quantity </param>
+        /// <param name="price">            price </param>
+        /// <param name="stoploss">         stoploss, in rupees away from your entry price </param>
+        /// <param name="trailingStoploss"> trailing stoploss step, in rupees </param>
+        /// <returns> the order id given by your stock broker </returns>
+        IOperationResponse<String> PlaceAutoTraderCoverOrder(string pseudoAccount, string exchange, string symbol,
+            TradeType tradeType, OrderType orderType, int quantity, float price, float stoploss,
+            float trailingStoploss);
 
         /// <summary>
         /// Places an advanced order. For more information, please see <a href=

@@ -3,93 +3,90 @@
 Maintainer notes for publishing this library to NuGet as
 [`StocksDeveloper.AutoTraderWeb.Api`](https://www.nuget.org/packages/StocksDeveloper.AutoTraderWeb.Api/).
 
-Last verified: **2026-08-08**.
+Last verified: **2026-08-08** (release 1.4.0).
 
-## Toolchain required
+## What you need
 
-This is an **old-style (non-SDK) `.csproj`**, `ToolsVersion 15.0`, targeting `net472`, with its
-dependencies in `packages.config` resolved through `HintPath` into `packages\`. Packaging it needs all
-three of:
+Just the [.NET SDK](https://dotnet.microsoft.com/download) (8.0 or newer). Nothing else — no Visual
+Studio, no `nuget.exe`, no .NET Framework Developer Pack.
 
-1. **`nuget.exe`** — the standalone CLI, for `restore` and `pack`
-   ([download](https://www.nuget.org/downloads))
-2. **MSBuild 15 or newer** — Visual Studio 2017+, or the standalone
-   [Build Tools for Visual Studio](https://visualstudio.microsoft.com/downloads/).
-   The `MSBuild.exe` that ships under `C:\Windows\Microsoft.NET\Framework64\v4.0.30319` is MSBuild 4.0
-   and **cannot** build a ToolsVersion 15 project.
-3. **.NET Framework 4.7.2 Developer Pack** (the reference assemblies)
+That works because the project is SDK-style and pulls in
+`Microsoft.NETFramework.ReferenceAssemblies`, which supplies the .NET Framework 4.7.2 reference
+assemblies as an ordinary build-time package. The library still targets `net472` and still ships as
+`lib/net472/StocksDeveloper.AutoTraderWeb.Api.dll` — only the build tooling changed.
 
-`dotnet build` alone will not work — it does not support `packages.config` projects.
+> Converted from the old `packages.config` format on 2026-08-08. If you find instructions elsewhere
+> mentioning `nuget pack`, `msbuild`, `AssemblyInfo.cs` versions or `csharp-library.nuspec`, they are
+> out of date — none of those are used any more.
 
 ## Before you start
 
 - Every change is committed and pushed.
-- Check what is already published and pick the next version from that:
+- Check what is already published and pick the next version from that. New API calls are a minor
+  bump; a fix is a patch bump.
 
   ```bash
   curl -s https://api.nuget.org/v3-flatcontainer/stocksdeveloper.autotraderweb.api/index.json
   ```
 
-  New API calls are a minor bump; a fix is a patch bump.
-
-> **A NuGet version cannot be deleted**, only unlisted — and the number is never reusable. Get it
+> **A NuGet version cannot be deleted**, only unlisted, and the number is never reusable. Get it
 > right before you push.
 
 ## Steps
 
-**1. Bump the version in BOTH places.** They are separate files and they must agree:
+**1. Bump the version.** One place only — `<Version>` in `csharp-library.csproj`. It drives the
+package version, the assembly version and the file version together.
 
-- `Properties/AssemblyInfo.cs` — `AssemblyVersion` **and** `AssemblyFileVersion`
-  (four-part, e.g. `1.4.0.0`)
-- `csharp-library.nuspec` — `<version>` (three-part, e.g. `1.4.0`)
-
-While you are in the `.nuspec`, update `<releaseNotes>` to describe this release. It is shown on the
+While you are there, update `<PackageReleaseNotes>` to describe this release. It is shown on the
 package page, and a stale note is worse than none.
 
-**2. Restore, clean, build.**
+**2. Build and pack.**
 
 ```bash
-nuget restore csharp-library.sln
-msbuild csharp-library.sln /t:Clean /p:Configuration=Release
-msbuild csharp-library.sln /t:Build /p:Configuration=Release
+dotnet build -c Release
+dotnet pack  -c Release
 ```
 
-**3. Pack.** Pack the **project**, not the bare `.nuspec` — the `.nuspec` here carries metadata only
-and has no `<files>` section, so packing it alone produces a package with no assembly in it.
+The package lands in `bin/Release/StocksDeveloper.AutoTraderWeb.Api.<version>.nupkg`.
+
+**3. Verify before pushing.** A `.nupkg` is a zip. Confirm the assembly is in the right place, the
+version is right, and the API you are shipping is actually in the DLL:
 
 ```bash
-nuget pack csharp-library.csproj -Prop Configuration=Release
+python -c "
+import zipfile,sys
+z=zipfile.ZipFile(sys.argv[1])
+print([n for n in z.namelist() if n.endswith(('.dll','.nuspec'))])
+dll=z.read('lib/net472/StocksDeveloper.AutoTraderWeb.Api.dll')
+print('PlaceAutoTraderBracketOrder' in str(dll))
+" bin/Release/StocksDeveloper.AutoTraderWeb.Api.<version>.nupkg
 ```
 
-**4. Verify before pushing.** A `.nupkg` is a zip — confirm the assembly is inside and the version is
-what you expect:
+**4. Push.**
 
 ```bash
-python -c "import zipfile,sys;print('\n'.join(n for n in zipfile.ZipFile(sys.argv[1]).namelist() if n.endswith(('.dll','.nuspec'))))" StocksDeveloper.AutoTraderWeb.Api.1.4.0.nupkg
+dotnet nuget push bin/Release/StocksDeveloper.AutoTraderWeb.Api.<version>.nupkg \
+  --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY"
 ```
 
-**5. Push.**
+Keep the key in an environment variable so it never lands in your shell history. Never commit a key
+or paste one into an issue, a chat or a document.
 
-```bash
-nuget push StocksDeveloper.AutoTraderWeb.Api.<version>.nupkg -Source https://api.nuget.org/v3/index.json -ApiKey %NUGET_API_KEY%
-```
+**5. Confirm** the new version appears on the package page and restores into a test project.
 
-Keep the key in an environment variable so it never enters your shell history. Never commit a key or
-paste one into an issue, a chat or a document.
+## Notes
 
-**6. Confirm** the new version appears on the package page and installs into a test project.
-
-## Gotchas
-
-- **Two version numbers, two files.** Bumping the `.nuspec` but not `AssemblyInfo.cs` produces a
-  package whose assembly reports the old version — it installs fine and is confusing for years.
-- **`nuget pack` with no argument** in this directory is ambiguous (there is both a `.csproj` and a
-  `.nuspec`). Always name the `.csproj`.
+- **Package metadata lives in the `.csproj`**, in the `PackageId`/`Version`/`Description` property
+  group. There is no `.nuspec` any more, and `Properties/AssemblyInfo.cs` keeps only the two
+  attributes the SDK does not generate (`ComVisible`, `Guid`) — everything else, including the
+  version, comes from the project file. This is deliberate: the version used to live in two files
+  that could silently disagree.
+- **Dependencies are declared once**, as `PackageReference`. Only `System.Text.Json` is listed
+  directly; the rest (`System.Buffers`, `System.Memory`, `System.Numerics.Vectors`,
+  `System.Runtime.CompilerServices.Unsafe`, `System.Text.Encodings.Web`,
+  `System.Threading.Tasks.Extensions`, `System.ValueTuple`, `Microsoft.Bcl.AsyncInterfaces`) come in
+  transitively at the same versions the old `packages.config` pinned. Do not re-add them by hand.
+- `Microsoft.NETFramework.ReferenceAssemblies` is marked `PrivateAssets="all"`, so it is build-time
+  only and never appears in the published package's dependency list.
 - The website's C# setup page installs "latest" and does **not** pin a version, so a release needs no
   website change.
-
-## Worth doing
-
-Migrating to an **SDK-style `.csproj`** targeting `net472` would let `dotnet pack` build and package
-this on any machine with the .NET SDK — no Visual Studio, no `nuget.exe`, no separate developer pack —
-and would fold the `.nuspec` into the project file so the version lives in exactly one place.

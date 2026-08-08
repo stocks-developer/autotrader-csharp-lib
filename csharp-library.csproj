@@ -23,7 +23,7 @@
   <!-- NuGet package metadata (was csharp-library.nuspec) -->
   <PropertyGroup>
     <PackageId>StocksDeveloper.AutoTraderWeb.Api</PackageId>
-    <Version>1.4.0</Version>
+    <Version>1.5.0</Version>
     <Title>StocksDeveloper Broker Independent Automated Trading C# API</Title>
     <Authors>Pritesh Mhatre</Authors>
     <Company>Stocks Developer</Company>
@@ -37,7 +37,7 @@
     <RepositoryType>git</RepositoryType>
     <Copyright>Copyright © Stocks Developer</Copyright>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>Added AutoTrader bracket and cover orders: PlaceAutoTraderBracketOrder and PlaceAutoTraderCoverOrder, with target, stop-loss and trailing stop-loss. These work on every supported broker, including brokers that do not offer bracket or cover orders of their own.</PackageReleaseNotes>
+    <PackageReleaseNotes>Adds the account management APIs: FetchAllTradingAccounts, CreateTradingAccount, UpdateTradingAccount, ValidateCredentials, ValidateAccount and ValidateAllAccounts. ValidateAccount and ValidateAllAccounts are useful before the market opens, to find accounts whose broker credentials have expired.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

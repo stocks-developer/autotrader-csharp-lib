@@ -1,4 +1,5 @@
 ﻿using com.dakshata.constants.trading;
+using com.dakshata.data.model.autotrader.service;
 using com.dakshata.data.model.common;
 using com.dakshata.trading.model.platform;
 using System;
@@ -91,6 +92,58 @@ namespace com.dakshata.autotrader.api
         public IOperationResponse<ISet<string>> FetchLivePseudoAccounts()
         {
             return Execute<ISet<string>>(GET, ACCOUNT_URI + "/fetchLivePseudoAccounts");
+        }
+
+        public IOperationResponse<ISet<TradingAccountPublic>> FetchAllTradingAccounts()
+        {
+            return Execute<ISet<TradingAccountPublic>>(GET, ACCOUNT_URI + "/fetchAllTradingAccounts");
+        }
+
+        public IOperationResponse<long?> CreateTradingAccount(IDictionary<string, string> account)
+        {
+            return Execute<long?>(POST, ACCOUNT_URI + "/createTradingAccount", ToObjectMap(account));
+        }
+
+        public IOperationResponse<long?> UpdateTradingAccount(IDictionary<string, string> account)
+        {
+            return Execute<long?>(POST, ACCOUNT_URI + "/updateTradingAccount", ToObjectMap(account));
+        }
+
+        public IOperationResponse<bool?> ValidateCredentials(IDictionary<string, string> account)
+        {
+            return Execute<bool?>(POST, ACCOUNT_URI + "/validateCredentials", ToObjectMap(account));
+        }
+
+        public IOperationResponse<bool?> ValidateAccount(long tradingAccountId)
+        {
+            IDictionary<string, object> data = new Dictionary<string, object>
+            {
+                ["tradingAccId"] = tradingAccountId
+            };
+
+            return Execute<bool?>(POST, ACCOUNT_URI + "/validateAccount", data);
+        }
+
+        public IOperationResponse<IList<AccountValidationPublic>> ValidateAllAccounts()
+        {
+            return Execute<IList<AccountValidationPublic>>(POST, ACCOUNT_URI + "/validateAllAccounts");
+        }
+
+        /// <summary>
+        /// The account calls take free-form broker specific fields, so they are typed as
+        /// string values for the caller; Execute wants objects.
+        /// </summary>
+        private static IDictionary<string, object> ToObjectMap(IDictionary<string, string> account)
+        {
+            IDictionary<string, object> data = new Dictionary<string, object>();
+            if (account != null)
+            {
+                foreach (KeyValuePair<string, string> entry in account)
+                {
+                    data[entry.Key] = entry.Value;
+                }
+            }
+            return data;
         }
 
         public IOperationResponse<bool?> CancelAllOrders(string pseudoAccount)

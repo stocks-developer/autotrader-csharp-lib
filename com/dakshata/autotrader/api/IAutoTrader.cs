@@ -1,4 +1,5 @@
 using com.dakshata.constants.trading;
+using com.dakshata.data.model.autotrader.service;
 using com.dakshata.data.model.common;
 using com.dakshata.trading.model.platform;
 using System;
@@ -21,6 +22,50 @@ namespace com.dakshata.autotrader.api
         /// </summary>
         /// <returns> live pseudo accounts </returns>
         IOperationResponse<ISet<String>> FetchLivePseudoAccounts();
+
+        /// <summary>
+        /// Provides every trading account under your user, with its broker, platform, nickname and
+        /// licence details. Never returns credentials or any other sensitive field.
+        /// </summary>
+        /// <returns> the trading accounts under your user </returns>
+        IOperationResponse<ISet<TradingAccountPublic>> FetchAllTradingAccounts();
+
+        /// <summary>
+        /// Adds a new broker trading account. The keys your account needs depend on the broker and
+        /// platform - see the Create or Update Trading Account api docs.
+        /// </summary>
+        /// <param name="account"> the account fields, as documented for your broker </param>
+        /// <returns> the id of the trading account that was created </returns>
+        IOperationResponse<long?> CreateTradingAccount(IDictionary<string, string> account);
+
+        /// <summary>
+        /// Updates an existing broker trading account. Takes the same fields as
+        /// CreateTradingAccount.
+        /// </summary>
+        /// <param name="account"> the account fields, as documented for your broker </param>
+        /// <returns> the id of the trading account that was updated </returns>
+        IOperationResponse<long?> UpdateTradingAccount(IDictionary<string, string> account);
+
+        /// <summary>
+        /// Checks whether a set of broker credentials is valid, without saving an account.
+        /// </summary>
+        /// <param name="account"> the account fields, as documented for your broker </param>
+        /// <returns> true when the credentials are valid </returns>
+        IOperationResponse<bool?> ValidateCredentials(IDictionary<string, string> account);
+
+        /// <summary>
+        /// Checks whether an account you have already saved can still log in to the broker. Useful
+        /// every morning before the market opens, to find expired credentials early.
+        /// </summary>
+        /// <param name="tradingAccountId"> the trading account id </param>
+        /// <returns> true when the account can log in </returns>
+        IOperationResponse<bool?> ValidateAccount(long tradingAccountId);
+
+        /// <summary>
+        /// Checks every trading account under your user in one call, reporting each separately.
+        /// </summary>
+        /// <returns> one result per trading account </returns>
+        IOperationResponse<IList<AccountValidationPublic>> ValidateAllAccounts();
 
         /// <summary>
         /// Places a regular order. For more information, please see <a href=

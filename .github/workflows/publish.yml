@@ -1,0 +1,85 @@
+# Publishes StocksDeveloper.AutoTraderWeb.Api to NuGet.org.
+#
+# No API key is stored anywhere. The job asks GitHub for a short-lived OIDC token, NuGet.org
+# validates it against the trusted publishing policy configured for this repository, and returns a
+# temporary API key that is valid for about an hour and usable once. Nothing to rotate, nothing to
+# leak.
+#
+# Release = push a tag that matches the version in csharp-library.csproj, e.g.
+#     git tag v1.4.0 && git push origin v1.4.0
+# The job refuses to publish if the tag and the csproj version disagree, so a forgotten version bump
+# fails the build instead of silently republishing the wrong number.
+#
+# See RELEASING.md for the full process and the one-time nuget.org setup.
+
+name: Publish to NuGet
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:          # manual run, publishes whatever version the csproj says
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write         # REQUIRED: lets this job request the GitHub OIDC token
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Read version from csharp-library.csproj
+        id: version
+        run: |
+          VERSION=$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' csharp-library.csproj | head -1)
+          if [ -z "$VERSION" ]; then echo "::error::no <Version> found in csharp-library.csproj"; exit 1; fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "csproj version: $VERSION"
+
+      # A tag release must match the csproj. Catches "tagged v1.5.0 but forgot to bump the csproj".
+      - name: Check the tag matches the csproj version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          if [ "$TAG" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error::tag v$TAG does not match csproj version ${{ steps.version.outputs.version }}"
+            exit 1
+          fi
+
+      - name: Build
+        run: dotnet build -c Release
+
+      - name: Pack
+        run: dotnet pack -c Release
+
+      # Cheap guard against shipping an empty or wrong-shaped package.
+      - name: Verify the package
+        run: |
+          PKG="bin/Release/StocksDeveloper.AutoTraderWeb.Api.${{ steps.version.outputs.version }}.nupkg"
+          test -f "$PKG" || { echo "::error::$PKG was not produced"; exit 1; }
+          unzip -l "$PKG"
+          unzip -l "$PKG" | grep -q 'lib/net472/StocksDeveloper.AutoTraderWeb.Api.dll' \
+            || { echo "::error::the package does not contain lib/net472/…dll"; exit 1; }
+          echo "PKG=$PKG" >> "$GITHUB_ENV"
+
+      # Requested immediately before the push: the key expires in ~1 hour and is single use.
+      - name: Exchange the OIDC token for a temporary NuGet API key
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}     # nuget.org profile name, NOT an email address
+
+      - name: Push to NuGet.org
+        run: >
+          dotnet nuget push "$PKG"
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json

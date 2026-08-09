@@ -3,7 +3,7 @@
 Maintainer notes for publishing this library to NuGet as
 [`StocksDeveloper.AutoTraderWeb.Api`](https://www.nuget.org/packages/StocksDeveloper.AutoTraderWeb.Api/).
 
-Last verified: **2026-08-08** (release 1.4.0).
+Last verified: **2026-08-08** (release 1.5.0).
 
 **Publishing is keyless.** [`.github/workflows/publish.yml`](.github/workflows/publish.yml) does it,
 using NuGet [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing):
@@ -30,9 +30,9 @@ dotnet pack  -c Release
 **3. Commit, then tag and push the tag.**
 
 ```bash
-git commit -am "Release 1.4.0"
+git commit -am "Release 1.6.0"
 git push
-git tag v1.4.0 && git push origin v1.4.0
+git tag v1.6.0 && git push origin v1.6.0
 ```
 
 The tag must match the csproj version — the workflow compares them and fails if they disagree, so a
